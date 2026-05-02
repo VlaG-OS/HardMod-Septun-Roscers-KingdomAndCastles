@@ -1,0 +1,655 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using UnityEngine;
+
+// Token: 0x0200032E RID: 814
+public partial class RaiderSystem : MonoBehaviour, ICamTrackable
+{
+	// Token: 0x060018DF RID: 6367
+	public void SetupRaid()
+	{
+		float num91 = 2.3f;
+		int cfg_shipsPerYearDivisor = 10;
+		int cfg_eliteChanceDivisor = 3;
+		int cfg_eliteChanceMax = 50;
+		int cfg_shipsMinimum = 2;
+		float cfg_escalationMultiplier = 1.4f;
+		int cfg_minPointsPerYear = 2;
+		int cfg_capEasy_yearMult = 5;
+		int cfg_capEasy_workerDiv = 8;
+		int cfg_capNormal_yearMult = 6;
+		int cfg_capNormal_workerDiv = 6;
+		int cfg_capHard_yearMult = 8;
+		int cfg_capHard_workerDiv = 5;
+		int cfg_capSurvival_yearMult = 10;
+		int cfg_capSurvival_workerDiv = 3;
+		int cfg_minPointsEasy = 3;
+		int cfg_minPointsNormal = 4;
+		int cfg_minPointsHard = 6;
+		int cfg_minPointsSurvival = 10;
+		int cfg_catapultYearEasy = 150;
+		int cfg_catapultYearHard = 95;
+		int cfg_catapultYearSurvival = 65;
+		int cfg_catapultFreqEasy = 32;
+		int cfg_catapultFreqNormal = 4;
+		int cfg_catapultFreqHard = 24;
+		int cfg_catapultFreqSurvival = 12;
+		int cfg_ogreFreqNormal = 4;
+		int cfg_ogreFreqAt2000pop = 3;
+		int cfg_ogreFreqAt4000pop = 2;
+		int cfg_bossWaveStartYear = 20;
+		int cfg_bossWaveEveryNYears = 10;
+		float cfg_bossStrengthMultiplier = 4f;
+		int cfg_bossShipsPerYearDivisor = 5;
+		int cfg_bossEliteChanceDivisor = 1;
+		int cfg_bossEliteChanceMax = 95;
+		int cfg_bossShipsMinimum = 6;
+		float cfg_bossEscalationMultiplier = 2.5f;
+		float cfg_bossCapsMultiplier = 2f;
+		int cfg_bossOgreFreqNormal = 4;
+		int cfg_bossOgreFreqAt2000pop = 3;
+		int cfg_bossOgreFreqAt4000pop = 2;
+		int cfg_guaranteedOgreYear = 30;
+		int cfg_guaranteedOgreCount = 14;
+		int cfg_bossGuaranteedOgreCount = 25;
+		float cfg_lateGameBonusPerYear = 0.05f;
+		int cfg_lateGameBonusStartYear = 100;
+		float lateGameMultiplier = 1f;
+		if (Player.inst.CurrYear > cfg_lateGameBonusStartYear)
+		{
+			int yearsOver100 = Player.inst.CurrYear - cfg_lateGameBonusStartYear;
+			lateGameMultiplier = 1f + (float)yearsOver100 * cfg_lateGameBonusPerYear;
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Late game multiplier active: ",
+				lateGameMultiplier.ToString("F2"),
+				"x (+",
+				((float)yearsOver100 * cfg_lateGameBonusPerYear * 100f).ToString("F0"),
+				"% from year ",
+				cfg_lateGameBonusStartYear,
+				")"
+			}));
+		}
+		float num92 = num91;
+		int num93 = cfg_shipsPerYearDivisor;
+		int num94 = cfg_eliteChanceDivisor;
+		int max = cfg_eliteChanceMax;
+		bool flag = Player.inst.CurrYear >= cfg_bossWaveStartYear && Player.inst.CurrYear % cfg_bossWaveEveryNYears == 0;
+		if (flag)
+		{
+			num92 = cfg_bossStrengthMultiplier;
+			num93 = cfg_bossShipsPerYearDivisor;
+			num94 = cfg_bossEliteChanceDivisor;
+			max = cfg_bossEliteChanceMax;
+			Debug.Log("DoubleRaids: *** BOSS WAVE YEAR " + Player.inst.CurrYear + " *** MAXIMUM STRENGTH!");
+		}
+		else
+		{
+			Debug.Log("DoubleRaids: Regular raid, year " + Player.inst.CurrYear);
+		}
+		Debug.Log("DoubleRaids: Multiplying raid strength!");
+		float baseEscalationMult = flag ? cfg_bossEscalationMultiplier : cfg_escalationMultiplier;
+		this.escalationPoints *= baseEscalationMult * lateGameMultiplier;
+		RaiderSystem.raidNotify onRaidStarted = this.OnRaidStarted;
+		if (onRaidStarted != null)
+		{
+			onRaidStarted();
+		}
+		this.maxShips = Mathf.Max(Player.inst.CurrYear / num93, cfg_shipsMinimum);
+		if (flag)
+		{
+			this.maxShips = Mathf.Max(this.maxShips, cfg_bossShipsMinimum);
+		}
+		this.ClearUnassignedObjectives();
+		List<RaiderSystem.Objective> list = new List<RaiderSystem.Objective>();
+		float num95 = 0f;
+		int i = Player.inst.Workers.Count;
+		float num96 = 33f;
+		while (i > 0)
+		{
+			num95 += (float)Mathff.Clamp(i, 0, 450) / num96;
+			i -= 450;
+			num96 += 12f;
+		}
+		float num97 = 0f;
+		int j = Player.inst.CurrYear;
+		if (Player.inst.difficulty == Player.Difficulty.Survival)
+		{
+			num97 += (float)j / 2f;
+		}
+		else
+		{
+			float num98 = 25f;
+			if (Player.inst.difficulty == Player.Difficulty.Hard)
+			{
+				num98 = 10f;
+			}
+			while (j > 0)
+			{
+				num97 += (float)Mathff.Clamp(j, 0, 100) / num98;
+				j -= 100;
+				num98 += 4f;
+			}
+		}
+		int k = (int)(num97 + num95 + this.escalationPoints);
+		k = (int)((float)k * num92);
+		k = Mathf.Max(k, Player.inst.CurrYear * cfg_minPointsPerYear);
+		k = (int)((float)k * lateGameMultiplier);
+		Debug.Log(string.Concat(new object[]
+		{
+			"DoubleRaids: Raid points after late game multiplier (",
+			lateGameMultiplier.ToString("F2"),
+			"x): ",
+			k
+		}));
+		if (Player.inst.difficulty == Player.Difficulty.Easy)
+		{
+			int num99 = Mathf.Max(50, Player.inst.CurrYear * cfg_capEasy_yearMult + Player.inst.Workers.Count / cfg_capEasy_workerDiv);
+			if (flag)
+			{
+				num99 = (int)((float)num99 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Easy) = ",
+				num99,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
+			k = Mathff.Clamp(k, cfg_minPointsEasy, num99);
+		}
+		else if (Player.inst.difficulty == Player.Difficulty.Hard)
+		{
+			int num100 = Mathf.Max(50, Player.inst.CurrYear * cfg_capHard_yearMult + Player.inst.Workers.Count / cfg_capHard_workerDiv);
+			if (flag)
+			{
+				num100 = (int)((float)num100 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Hard) = ",
+				num100,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
+			k = Mathff.Clamp(k, cfg_minPointsHard, num100);
+		}
+		else if (Player.inst.difficulty == Player.Difficulty.Survival)
+		{
+			int num101 = Mathf.Max(50, Player.inst.CurrYear * cfg_capSurvival_yearMult + Player.inst.Workers.Count / cfg_capSurvival_workerDiv);
+			if (flag)
+			{
+				num101 = (int)((float)num101 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Survival) = ",
+				num101,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
+			k = Mathff.Clamp(k, cfg_minPointsSurvival, num101);
+		}
+		else
+		{
+			int num102 = Mathf.Max(50, Player.inst.CurrYear * cfg_capNormal_yearMult + Player.inst.Workers.Count / cfg_capNormal_workerDiv);
+			if (flag)
+			{
+				num102 = (int)((float)num102 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Normal) = ",
+				num102,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
+			k = Mathff.Clamp(k, cfg_minPointsNormal, num102);
+		}
+		List<RaiderSystem.ObjectiveType> list2 = new List<RaiderSystem.ObjectiveType>();
+		for (int l = 0; l < 5; l++)
+		{
+			list2.Add(RaiderSystem.ObjectiveType.StartFire);
+		}
+		if (k >= 5)
+		{
+			list2.Add(RaiderSystem.ObjectiveType.StealResources);
+		}
+		while (k > 0)
+		{
+			int index = SRand.Range(0, list2.Count);
+			RaiderSystem.ObjectiveType objectiveType = list2[index];
+			int num103 = 0;
+			if (objectiveType == RaiderSystem.ObjectiveType.StartFire)
+			{
+				num103 = 1;
+			}
+			else if (objectiveType == RaiderSystem.ObjectiveType.StealResources)
+			{
+				num103 = 5;
+			}
+			k -= num103;
+			list.Add(new RaiderSystem.Objective
+			{
+				type = objectiveType,
+				targetCellX = -1,
+				targetCellZ = -1
+			});
+		}
+		List<RaiderSystem.Objective> list3 = new List<RaiderSystem.Objective>();
+		int num104 = 0;
+		List<int> list4 = new List<int>();
+		List<List<Cell>> list5 = new List<List<Cell>>();
+		for (int m = 0; m < World.inst.NumLandMasses; m++)
+		{
+			int count = World.inst.GetVillagersForLandMass(m).Count;
+			if (count > 0)
+			{
+				List<Cell> landings = RaiderSystem.GetLandings(m, 50);
+				if (landings.Count > 0)
+				{
+					list5.Add(landings);
+					list4.Add(m);
+				}
+			}
+			num104 += count;
+		}
+		bool flag2 = Player.inst.difficulty >= Player.Difficulty.Hard;
+		bool flag3 = Player.inst.CurrYear >= 50 || (flag2 && num104 > 70) || (!flag2 && (num104 > 190 || (num104 > 100 && Player.inst.CurrYear > 50)));
+		int num105 = 0;
+		int num106 = 0;
+		int num107 = 0;
+		int num108 = 0;
+		int count2 = Player.inst.Workers.Count;
+		List<RaiderSystem.ObjectiveSet> list6 = new List<RaiderSystem.ObjectiveSet>();
+		int num109 = 0;
+		for (int n = 0; n < list4.Count; n++)
+		{
+			float num110 = (float)World.inst.GetVillagersForLandMass(list4[n]).Count / (float)count2;
+			if (Player.inst.difficulty == Player.Difficulty.Survival)
+			{
+				num110 = 1f / (float)list4.Count;
+			}
+			int num111 = Mathff.Max(1, Mathf.FloorToInt((float)list.Count * num110));
+			int num112 = num111;
+			if (num111 >= 10)
+			{
+				int num113 = SRand.Range(0, 100);
+				if (num113 >= 0 && num113 < 25)
+				{
+					num112 = (int)((float)num111 * 0.33f);
+				}
+				else if (num113 >= 25 && num113 < 50)
+				{
+					num112 = (int)((float)num111 * 0.5f);
+				}
+			}
+			RaiderSystem.ObjectiveSet objectiveSet = null;
+			int num114 = 0;
+			while (num114 < num111 && num109 < list.Count)
+			{
+				if (objectiveSet == null || num114 == num112)
+				{
+					objectiveSet = new RaiderSystem.ObjectiveSet();
+					objectiveSet.landmassIdx = list4[n];
+					objectiveSet.landings = list5[n];
+					list6.Add(objectiveSet);
+				}
+				if (list[num109].type == RaiderSystem.ObjectiveType.StartFire)
+				{
+					objectiveSet.startFire.Add(list[num109]);
+				}
+				if (list[num109].type == RaiderSystem.ObjectiveType.StealResources)
+				{
+					objectiveSet.stealResources.Add(list[num109]);
+				}
+				num109++;
+				num114++;
+			}
+		}
+		Cell cell3 = World.inst.rimCells[SRand.Range(0, World.inst.rimCells.Length - 1)];
+		int num115 = 0;
+		Vector3 normalized = (cell3.Center - World.inst.GridCenter()).normalized;
+		for (int num116 = 0; num116 < list6.Count; num116++)
+		{
+			int landmassIdx = list6[num116].landmassIdx;
+			Vector3 worldPos = World.inst.GridCenter() + Quaternion.AngleAxis((float)num115, new Vector3(0f, 1f, 0f)) * normalized * (float)World.inst.GridWidth * 1.41f;
+			num115 += 200;
+			Cell cellDataClamped = World.inst.GetCellDataClamped(worldPos);
+			List<Cell> landings2 = list6[num116].landings;
+			Cell cell2 = this.RemoveBestLanding(landings2, cellDataClamped.Center);
+			List<Building> list7 = new List<Building>();
+			this.PopulatePotentialTargets(cell2.Center, landmassIdx, ref list7);
+			if (list7.Count > 0)
+			{
+				List<RaiderSystem.Objective> list8 = new List<RaiderSystem.Objective>();
+				int num117 = 0;
+				List<RaiderSystem.Objective> list9 = new List<RaiderSystem.Objective>();
+				for (int num118 = 0; num118 < list6[num116].startFire.Count; num118++)
+				{
+					RaiderSystem.Objective objective = list6[num116].startFire[num118];
+					objective.landing = cell2.Center;
+					Building building = null;
+					int num119 = num117;
+					do
+					{
+						if (Player.inst.difficulty == Player.Difficulty.Survival)
+						{
+							building = list7[num117];
+						}
+						else if (list7[num117].uniqueNameHash == RaiderSystem.farmHash || list7[num117].uniqueNameHash == RaiderSystem.orchardHash || list7[num117].uniqueNameHash == RaiderSystem.windmillHash || list7[num117].categoryHash == this.stockpileHash || list7[num117].categoryHash == RaiderSystem.houseHash || list7[num117].uniqueNameHash == RaiderSystem.woodcastleblockHash || list7[num117].categoryHash == this.granaryHash || list7[num117].categoryHash == World.projectileTopperHash)
+						{
+							building = list7[num117];
+						}
+						num117++;
+						if (num117 >= list7.Count)
+						{
+							num117 = 0;
+						}
+					}
+					while (num119 != num117 && building == null);
+					if (building == null)
+					{
+						ArrayExt<ArrayExt<Building>> arrayExt = new ArrayExt<ArrayExt<Building>>(5);
+						Player.inst.GetBuildingListsByCategoryForLandMass(landmassIdx, RaiderSystem.houseHash, ref arrayExt);
+						int num120 = 0;
+						int num121 = 0;
+						while (num118 < arrayExt.Count)
+						{
+							num120 += arrayExt.data[num121].Count;
+							num118++;
+						}
+						int num122 = 0;
+						int num123 = SRand.Range(0, num120);
+						for (int num124 = 0; num124 < arrayExt.Count; num124++)
+						{
+							if (num123 >= num122 && num123 < num122 + arrayExt.data[num124].Count)
+							{
+								building = arrayExt.data[num124].data[num123 - num122];
+								break;
+							}
+							num122 += arrayExt.data[num124].Count;
+						}
+						if (building != null && flag3)
+						{
+							this.AddDestroyBuildingObjectivesIfNecessary(cell2, building, list3);
+						}
+					}
+					if (building != null)
+					{
+						objective.targetCellX = (int)building.transform.position.x;
+						objective.targetCellZ = (int)building.transform.position.z;
+						list9.Add(objective);
+					}
+				}
+				num117 = 0;
+				for (int num125 = 0; num125 < list6[num116].stealResources.Count; num125++)
+				{
+					RaiderSystem.Objective objective2 = list6[num116].stealResources[num125];
+					objective2.landing = cell2.Center;
+					Building building2 = null;
+					int num126 = num117;
+					do
+					{
+						if (list7[num117].categoryHash == World.throneRoomHash)
+						{
+							building2 = list7[num117];
+						}
+						else if (list7[num117].uniqueNameHash == World.dragonNestHash)
+						{
+							bool flag4 = false;
+							if (World.GetLandmassOwner(landmassIdx) != null)
+							{
+								DragonNest component = list7[num117].GetComponent<DragonNest>();
+								for (int num127 = 0; num127 < component.slots.Length; num127++)
+								{
+									if (component.slots[num127].isSlotEnabled && !component.slots[num127].isBabySlot)
+									{
+										flag4 = true;
+										break;
+									}
+								}
+							}
+							if (flag4)
+							{
+								building2 = list7[num117];
+							}
+						}
+						num117++;
+						if (num117 >= list7.Count)
+						{
+							num117 = 0;
+						}
+					}
+					while (num126 != num117 && building2 == null);
+					if (building2 == null)
+					{
+						building2 = Player.inst.GetBuildingListForLandMass(landmassIdx, World.throneRoomHash).RandomElement();
+						if (building2 != null && flag3)
+						{
+							this.AddDestroyBuildingObjectivesIfNecessary(cell2, building2, list3);
+						}
+						if (building2 == null)
+						{
+							building2 = Player.inst.GetBuildingListForLandMass(landmassIdx, World.largeThroneRoomHash).RandomElement();
+							if (building2 != null && flag3)
+							{
+								this.AddDestroyBuildingObjectivesIfNecessary(cell2, building2, list3);
+							}
+						}
+						if (building2 == null)
+						{
+							building2 = Player.inst.GetBuildingListForLandMass(landmassIdx, World.dragonNestHash).RandomElement();
+							if (building2 != null && flag3)
+							{
+								this.AddDestroyBuildingObjectivesIfNecessary(cell2, building2, list3);
+							}
+						}
+					}
+					if (building2 != null && RaiderSystem.ValidToStealFrom(building2) && Player.inst.PlayerLandmassOwner.Gold > 0)
+					{
+						objective2.targetCellX = (int)building2.transform.position.x;
+						objective2.targetCellZ = (int)building2.transform.position.z;
+						list8.Add(objective2);
+					}
+				}
+				IMoveableUnit moveableUnit = null;
+				int num128 = 0;
+				int num129 = 0;
+				while (num129 < list9.Count && num108 < this.maxShips)
+				{
+					Vector3 vector = cellDataClamped.Center - World.inst.GridCenter();
+					vector.Normalize();
+					Vector3 a = new Vector3(vector.z, 0f, -vector.x);
+					if (moveableUnit == null || num128 >= 2)
+					{
+						this.RemoveNearestLanding(landings2, cell2.Center);
+						moveableUnit = this.SpawnVikingBoat(cellDataClamped.Center + vector * 10f + a * (float)num105 * 2f);
+						num128 = 0;
+						num105++;
+						num108++;
+					}
+					UnitSystem.ArmyType armyType = UnitSystem.ArmyType.Default;
+					int num130 = Mathf.Clamp(Player.inst.CurrYear / num94, 5, max);
+					if (SRand.Range(0, 100) <= num130)
+					{
+						armyType = UnitSystem.ArmyType.Elite;
+					}
+					IMoveableUnit moveableUnit2 = this.SpawnArmy(cellDataClamped.Center, armyType, false);
+					if (moveableUnit2 != null)
+					{
+						this.GetUnitDataFor(moveableUnit2).objective = list9[num129];
+						(moveableUnit as MonoBehaviour).GetComponent<TroopTransportShip>().TryForceLoad(moveableUnit2);
+						this.GetUnitDataFor(moveableUnit).objective = list9[num129];
+					}
+					num128++;
+					num129 += 4;
+				}
+				int num131 = cfg_catapultYearEasy;
+				if (Player.inst.difficulty == Player.Difficulty.Hard)
+				{
+					num131 = cfg_catapultYearHard;
+				}
+				if (Player.inst.difficulty == Player.Difficulty.Survival)
+				{
+					num131 = cfg_catapultYearSurvival;
+				}
+				if (flag || Player.inst.CurrYear >= num131)
+				{
+					int num132 = cfg_catapultFreqNormal;
+					if (Player.inst.difficulty == Player.Difficulty.Easy)
+					{
+						num132 = cfg_catapultFreqEasy;
+					}
+					else if (Player.inst.difficulty == Player.Difficulty.Hard)
+					{
+						num132 = cfg_catapultFreqHard;
+					}
+					else if (Player.inst.difficulty == Player.Difficulty.Survival)
+					{
+						num132 = cfg_catapultFreqSurvival;
+					}
+					if (flag)
+					{
+						num132 = Mathf.Max(1, num132 / 2);
+					}
+					IMoveableUnit moveableUnit3 = null;
+					int num133 = 0;
+					int num134 = 0;
+					while (num134 < list9.Count && num108 < this.maxShips)
+					{
+						Vector3 vector2 = cellDataClamped.Center - World.inst.GridCenter();
+						vector2.Normalize();
+						Vector3 a2 = new Vector3(vector2.z, 0f, -vector2.x);
+						if (moveableUnit3 == null || num133 >= 2)
+						{
+							this.RemoveNearestLanding(landings2, cell2.Center);
+							moveableUnit3 = this.SpawnVikingBoat(cellDataClamped.Center + vector2 * 10f + a2 * (float)num106 * 2f);
+							num133 = 0;
+							num106++;
+							num108++;
+						}
+						IMoveableUnit unit = this.SpawnCatapult(cellDataClamped.Center);
+						this.GetUnitDataFor(unit).objective = list9[num134];
+						(moveableUnit3 as MonoBehaviour).GetComponent<TroopTransportShip>().TryForceLoad(unit);
+						this.GetUnitDataFor(moveableUnit3).objective = list9[num134];
+						num133++;
+						num134 += num132;
+					}
+				}
+				IMoveableUnit moveableUnit4 = null;
+				int num135 = 0;
+				int num136 = 0;
+				while (num136 < list8.Count && num108 < this.maxShips)
+				{
+					if (moveableUnit4 == null || num135 >= 2)
+					{
+						Vector3 vector3 = cellDataClamped.Center - World.inst.GridCenter();
+						vector3.Normalize();
+						Vector3 a3 = new Vector3(vector3.z, 0f, -vector3.x);
+						this.RemoveNearestLanding(landings2, cell2.Center);
+						moveableUnit4 = this.SpawnVikingBoat(cellDataClamped.Center + vector3 * 15f + a3 * (float)num107 * 2f);
+						num107++;
+						num108++;
+						num135 = 0;
+					}
+					IMoveableUnit moveableUnit5 = this.SpawnArmy(cellDataClamped.Center, UnitSystem.ArmyType.Thief, false);
+					if (moveableUnit5 != null)
+					{
+						this.GetUnitDataFor(moveableUnit5).objective = list8[num136];
+						(moveableUnit4 as MonoBehaviour).GetComponent<TroopTransportShip>().TryForceLoad(moveableUnit5);
+						this.GetUnitDataFor(moveableUnit4).objective = list8[num136];
+					}
+					num135++;
+					num136++;
+				}
+			}
+			if (Player.inst.CurrYear >= cfg_guaranteedOgreYear && list3.Count == 0)
+			{
+				int ogreCount = flag ? cfg_bossGuaranteedOgreCount : cfg_guaranteedOgreCount;
+				List<Building> list10 = new List<Building>();
+				this.PopulatePotentialTargets(cell2.Center, landmassIdx, ref list10);
+				int og = 0;
+				while (og < ogreCount && list10.Count > 0)
+				{
+					Building building3 = list10[SRand.Range(0, list10.Count)];
+					list3.Add(new RaiderSystem.Objective
+					{
+						type = RaiderSystem.ObjectiveType.StartFire,
+						targetCellX = (int)building3.transform.position.x,
+						targetCellZ = (int)building3.transform.position.z,
+						landing = cell2.Center
+					});
+					og++;
+				}
+				Debug.Log("DoubleRaids: Guaranteed ogres added: " + list3.Count);
+			}
+			int num137 = flag ? cfg_bossOgreFreqNormal : cfg_ogreFreqNormal;
+			if (World.inst.GetVillagersForLandMass(landmassIdx).Count > 2000)
+			{
+				num137 = (flag ? cfg_bossOgreFreqAt2000pop : cfg_ogreFreqAt2000pop);
+			}
+			if (World.inst.GetVillagersForLandMass(landmassIdx).Count > 4000)
+			{
+				num137 = (flag ? cfg_bossOgreFreqAt4000pop : cfg_ogreFreqAt4000pop);
+			}
+			int num138 = 0;
+			IMoveableUnit moveableUnit6 = null;
+			int num139 = 0;
+			for (int num140 = 0; num140 < list3.Count; num140 += num137)
+			{
+				if (moveableUnit6 == null || num139 >= 2)
+				{
+					Vector3 vector4 = cellDataClamped.Center - World.inst.GridCenter();
+					vector4.Normalize();
+					Vector3 a4 = new Vector3(vector4.z, 0f, -vector4.x);
+					this.RemoveNearestLanding(landings2, cell2.Center);
+					moveableUnit6 = this.SpawnOgreBoat(cellDataClamped.Center + vector4 * 0f + a4 * (float)num138 * 2f);
+					num138++;
+					num108++;
+					num139 = 0;
+				}
+				IMoveableUnit unit2 = this.SpawnOgre(cellDataClamped.Center, false);
+				this.GetUnitDataFor(unit2).objective = list3[num140];
+				(moveableUnit6 as MonoBehaviour).GetComponent<TroopTransportShip>().TryForceLoad(unit2);
+				this.GetUnitDataFor(moveableUnit6).objective = list3[num140];
+				num139++;
+			}
+			for (int num141 = 0; num141 < list3.Count; num141++)
+			{
+				list.Add(list3[num141]);
+			}
+		}
+		for (int num142 = 0; num142 < list.Count; num142++)
+		{
+			this.objectives.Add(list[num142]);
+		}
+		for (int num143 = 0; num143 < this.objectives.Count; num143++)
+		{
+			if (this.objectives[num143].targetCellX == -1 && this.objectives[num143].targetCellZ == -1)
+			{
+				this.objectives.RemoveAt(num143);
+				num143--;
+			}
+		}
+		if (flag)
+		{
+			Debug.Log("DoubleRaids: *** BOSS WAVE COMPLETE ***");
+			return;
+		}
+		Debug.Log("DoubleRaids: Raid setup complete!");
+	}
+}
