@@ -9,187 +9,108 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 	// Token: 0x060018DF RID: 6367
 	public void SetupRaid()
 	{
-		// =====================================================================
-		// КОНФИГУРАЦИЯ — все настройки здесь
-		// =====================================================================
-
-		// --- Базовый рейд ---
-		float cfg_strengthMultiplier       = 2.3f;  // Множитель очков рейда
-		int   cfg_shipsPerYearDivisor      = 10;    // Кораблей = год / это число
-		int   cfg_shipsMinimum             = 2;     // Минимум кораблей
-		int   cfg_vikingsPerBoat           = 2;     // Викингов на корабль
-		int   cfg_eliteChanceDivisor       = 3;     // Шанс элиты = год / это число
-		int   cfg_eliteChanceMin           = 5;     // Минимальный шанс элиты (%)
-		int   cfg_eliteChanceMax           = 50;    // Максимальный шанс элиты (%)
-		float cfg_escalationMultiplier     = 1.4f;  // Множитель escalationPoints
-		int   cfg_minPointsPerYear         = 2;     // Минимум очков = год * это число
-
-		// --- Динамический лимит очков по сложности ---
-		int   cfg_capMin                   = 50;    // Минимальный лимит для всех
-		int   cfg_capEasy_yearMult         = 5;     // Easy: лимит += год * это
-		int   cfg_capEasy_workerDiv        = 8;     // Easy: лимит += жители / это
-		int   cfg_capNormal_yearMult       = 6;     // Normal: лимит += год * это
-		int   cfg_capNormal_workerDiv      = 6;     // Normal: лимит += жители / это
-		int   cfg_capHard_yearMult         = 8;     // Hard: лимит += год * это
-		int   cfg_capHard_workerDiv        = 5;     // Hard: лимит += жители / это
-		int   cfg_capSurvival_yearMult     = 10;    // Survival: лимит += год * это
-		int   cfg_capSurvival_workerDiv    = 3;     // Survival: лимит += жители / это
-
-		// --- Минимум очков по сложности ---
-		int   cfg_minPointsEasy            = 3;
-		int   cfg_minPointsNormal          = 4;
-		int   cfg_minPointsHard            = 6;
-		int   cfg_minPointsSurvival        = 10;
-
-		// --- Катапульты ---
-		int   cfg_catapultYearEasy         = 150;   // С какого года катапульты (Easy)
-		int   cfg_catapultYearNormal       = 150;   // С какого года катапульты (Normal)
-		int   cfg_catapultYearHard         = 95;    // С какого года катапульты (Hard)
-		int   cfg_catapultYearSurvival     = 65;    // С какого года катапульты (Survival)
-		int   cfg_catapultFreqEasy         = 32;    // Катапульта каждые N целей (Easy)
-		int   cfg_catapultFreqNormal       = 4;     // Катапульта каждые N целей (Normal)
-		int   cfg_catapultFreqHard         = 24;    // Катапульта каждые N целей (Hard)
-		int   cfg_catapultFreqSurvival     = 12;    // Катапульта каждые N целей (Survival)
-
-		// --- Огры ---
-		int   cfg_ogreFreqNormal           = 4;     // Огр каждые N целей
-		int   cfg_ogreFreqAt2000pop        = 3;     // Огр каждые N целей (2000+ жит.)
-		int   cfg_ogreFreqAt4000pop        = 2;     // Огр каждые N целей (4000+ жит.)
-		int   cfg_guaranteedOgreYear       = 30;    // С какого года гарантированные огры
-		int   cfg_guaranteedOgreCount      = 14;    // Сколько гарантированных огров
-
-		// --- Босс-волна ---
-		int   cfg_bossWaveStartYear        = 20;    // С какого года начинаются босс-волны
-		int   cfg_bossWaveEveryNYears      = 10;    // Босс-волна каждые N лет
-		float cfg_bossStrengthMultiplier   = 4f;    // Множитель очков на босс-волне
-		int   cfg_bossShipsPerYearDivisor  = 5;     // Кораблей на босс = год / это
-		int   cfg_bossShipsMinimum         = 6;     // Минимум кораблей на босс-волне
-		int   cfg_bossEliteChanceDivisor   = 1;     // Шанс элиты на босс = год / это
-		int   cfg_bossEliteChanceMax       = 95;    // Макс шанс элиты на босс (%)
-		float cfg_bossEscalationMultiplier = 2.5f;  // Множитель escalationPoints на босс
-		float cfg_bossCapsMultiplier       = 2f;    // Множитель лимитов на босс-волне
-		int   cfg_bossOgreFreqNormal       = 4;     // Огр каждые N целей на босс
-		int   cfg_bossOgreFreqAt2000pop    = 3;     // Огр каждые N целей на босс (2000+)
-		int   cfg_bossOgreFreqAt4000pop    = 2;     // Огр каждые N целей на босс (4000+)
-		int   cfg_bossGuaranteedOgreCount  = 25;    // Гарантированных огров на босс
-		int   cfg_bossCatapultFreqDivisor  = 2;     // Катапульты на босс чаще в N раз
-
-		// --- Boss Surge (случайное усиление боссов после года 100) ---
-		int   cfg_bossurgeSurgeChance      = 30;    // Шанс surge (%)
-		float cfg_surgMultMin              = 1.3f;  // Минимальный множитель surge
-		float cfg_surgeMultMax             = 2.5f;    // Максимальный множитель surge
-		int   cfg_surgeStartYear           = 100;   // С какого года возможен surge
-
-		// --- Поздняя игра ---
-		float cfg_lateGameBonusPerYear     = 0.05f; // +5% за каждый год после старта
-		int   cfg_lateGameBonusStartYear   = 100;   // С какого года бонус поздней игры
-
-		// --- Расчёт очков (не трогать без понимания) ---
-		int   cfg_workerClampMax           = 450;   // Макс жителей за итерацию
-		float cfg_workerDivisorStart       = 33f;   // Начальный делитель жителей
-		float cfg_workerDivisorStep        = 12f;   // Шаг увеличения делителя
-		int   cfg_yearClampMax             = 100;   // Макс лет за итерацию
-		float cfg_yearDivisorNormal        = 25f;   // Делитель лет (Normal)
-		float cfg_yearDivisorHard          = 10f;   // Делитель лет (Hard)
-		float cfg_yearDivisorStep          = 4f;    // Шаг увеличения делителя лет
-
-		// =====================================================================
-		// КОД — не трогать
-		// =====================================================================
-
+		float num91 = 2.3f;
+		int cfg_shipsPerYearDivisor = 10;
+		int cfg_eliteChanceDivisor = 3;
+		int cfg_eliteChanceMax = 50;
+		int cfg_shipsMinimum = 2;
+		float cfg_escalationMultiplier = 1.4f;
+		int cfg_minPointsPerYear = 2;
+		int cfg_capEasy_yearMult = 5;
+		int cfg_capEasy_workerDiv = 8;
+		int cfg_capNormal_yearMult = 6;
+		int cfg_capNormal_workerDiv = 6;
+		int cfg_capHard_yearMult = 8;
+		int cfg_capHard_workerDiv = 5;
+		int cfg_capSurvival_yearMult = 10;
+		int cfg_capSurvival_workerDiv = 3;
+		int cfg_minPointsEasy = 3;
+		int cfg_minPointsNormal = 4;
+		int cfg_minPointsHard = 6;
+		int cfg_minPointsSurvival = 10;
+		int cfg_catapultYearEasy = 150;
+		int cfg_catapultYearHard = 95;
+		int cfg_catapultYearSurvival = 65;
+		int cfg_catapultFreqEasy = 32;
+		int cfg_catapultFreqNormal = 4;
+		int cfg_catapultFreqHard = 24;
+		int cfg_catapultFreqSurvival = 12;
+		int cfg_ogreFreqNormal = 4;
+		int cfg_ogreFreqAt2000pop = 3;
+		int cfg_ogreFreqAt4000pop = 2;
+		int cfg_bossWaveStartYear = 20;
+		int cfg_bossWaveEveryNYears = 10;
+		float cfg_bossStrengthMultiplier = 4f;
+		int cfg_bossShipsPerYearDivisor = 5;
+		int cfg_bossEliteChanceDivisor = 1;
+		int cfg_bossEliteChanceMax = 95;
+		int cfg_bossShipsMinimum = 6;
+		float cfg_bossEscalationMultiplier = 2.5f;
+		float cfg_bossCapsMultiplier = 2f;
+		int cfg_bossOgreFreqNormal = 4;
+		int cfg_bossOgreFreqAt2000pop = 3;
+		int cfg_bossOgreFreqAt4000pop = 2;
+		int cfg_guaranteedOgreYear = 30;
+		int cfg_guaranteedOgreCount = 14;
+		int cfg_bossGuaranteedOgreCount = 25;
+		float cfg_lateGameBonusPerYear = 0.05f;
+		int cfg_lateGameBonusStartYear = 100;
 		float lateGameMultiplier = 1f;
 		if (Player.inst.CurrYear > cfg_lateGameBonusStartYear)
 		{
-			int yearsOver = Player.inst.CurrYear - cfg_lateGameBonusStartYear;
-			lateGameMultiplier = 1f + (float)yearsOver * cfg_lateGameBonusPerYear;
+			int yearsOver100 = Player.inst.CurrYear - cfg_lateGameBonusStartYear;
+			lateGameMultiplier = 1f + (float)yearsOver100 * cfg_lateGameBonusPerYear;
 			Debug.Log(string.Concat(new object[]
 			{
 				"DoubleRaids: Late game multiplier active: ",
 				lateGameMultiplier.ToString("F2"),
 				"x (+",
-				((float)yearsOver * cfg_lateGameBonusPerYear * 100f).ToString("F0"),
+				((float)yearsOver100 * cfg_lateGameBonusPerYear * 100f).ToString("F0"),
 				"% from year ",
 				cfg_lateGameBonusStartYear,
 				")"
 			}));
 		}
-
-		float num92 = cfg_strengthMultiplier;
+		float num92 = num91;
 		int num93 = cfg_shipsPerYearDivisor;
 		int num94 = cfg_eliteChanceDivisor;
 		int max = cfg_eliteChanceMax;
 		bool flag = Player.inst.CurrYear >= cfg_bossWaveStartYear && Player.inst.CurrYear % cfg_bossWaveEveryNYears == 0;
-
-		float bossSurgeMultiplier = 1f;
-		bool bossSurgeTriggered = false;
-		if (flag && Player.inst.CurrYear > cfg_surgeStartYear)
-		{
-			if (SRand.Range(0, 100) < cfg_bossurgeSurgeChance)
-			{
-				bossSurgeTriggered = true;
-				float surgeRange = cfg_surgeMultMax - cfg_surgMultMin;
-				bossSurgeMultiplier = cfg_surgMultMin + (float)SRand.Range(0, (int)(surgeRange * 100f) + 1) / 100f;
-				Debug.Log("DoubleRaids: *** BOSS SURGE TRIGGERED! Surge multiplier: " + bossSurgeMultiplier.ToString("F2") + "x ***");
-			}
-			else
-			{
-				Debug.Log("DoubleRaids: Boss surge check failed (" + cfg_bossurgeSurgeChance + "%). No surge this wave.");
-			}
-		}
-
 		if (flag)
 		{
 			num92 = cfg_bossStrengthMultiplier;
 			num93 = cfg_bossShipsPerYearDivisor;
 			num94 = cfg_bossEliteChanceDivisor;
 			max = cfg_bossEliteChanceMax;
-			if (bossSurgeTriggered)
-			{
-				Debug.Log(string.Concat(new object[]
-				{
-					"DoubleRaids: *** BOSS WAVE YEAR ",
-					Player.inst.CurrYear,
-					" *** SURGE ACTIVE x",
-					bossSurgeMultiplier.ToString("F2"),
-					" ***"
-				}));
-			}
-			else
-			{
-				Debug.Log("DoubleRaids: *** BOSS WAVE YEAR " + Player.inst.CurrYear + " *** MAXIMUM STRENGTH!");
-			}
+			Debug.Log("DoubleRaids: *** BOSS WAVE YEAR " + Player.inst.CurrYear + " *** MAXIMUM STRENGTH!");
 		}
 		else
 		{
 			Debug.Log("DoubleRaids: Regular raid, year " + Player.inst.CurrYear);
 		}
-
 		Debug.Log("DoubleRaids: Multiplying raid strength!");
 		float baseEscalationMult = flag ? cfg_bossEscalationMultiplier : cfg_escalationMultiplier;
-		this.escalationPoints *= baseEscalationMult * lateGameMultiplier * bossSurgeMultiplier;
-
+		this.escalationPoints *= baseEscalationMult * lateGameMultiplier;
 		RaiderSystem.raidNotify onRaidStarted = this.OnRaidStarted;
 		if (onRaidStarted != null)
 		{
 			onRaidStarted();
 		}
-
 		this.maxShips = Mathf.Max(Player.inst.CurrYear / num93, cfg_shipsMinimum);
 		if (flag)
 		{
 			this.maxShips = Mathf.Max(this.maxShips, cfg_bossShipsMinimum);
 		}
-
 		this.ClearUnassignedObjectives();
 		List<RaiderSystem.Objective> list = new List<RaiderSystem.Objective>();
 		float num95 = 0f;
 		int i = Player.inst.Workers.Count;
-		float num96 = cfg_workerDivisorStart;
+		float num96 = 33f;
 		while (i > 0)
 		{
-			num95 += (float)Mathff.Clamp(i, 0, cfg_workerClampMax) / num96;
-			i -= cfg_workerClampMax;
-			num96 += cfg_workerDivisorStep;
+			num95 += (float)Mathff.Clamp(i, 0, 450) / num96;
+			i -= 450;
+			num96 += 12f;
 		}
 		float num97 = 0f;
 		int j = Player.inst.CurrYear;
@@ -199,62 +120,105 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 		}
 		else
 		{
-			float num98 = cfg_yearDivisorNormal;
+			float num98 = 25f;
 			if (Player.inst.difficulty == Player.Difficulty.Hard)
 			{
-				num98 = cfg_yearDivisorHard;
+				num98 = 10f;
 			}
 			while (j > 0)
 			{
-				num97 += (float)Mathff.Clamp(j, 0, cfg_yearClampMax) / num98;
-				j -= cfg_yearClampMax;
-				num98 += cfg_yearDivisorStep;
+				num97 += (float)Mathff.Clamp(j, 0, 100) / num98;
+				j -= 100;
+				num98 += 4f;
 			}
 		}
-
 		int k = (int)(num97 + num95 + this.escalationPoints);
 		k = (int)((float)k * num92);
 		k = Mathf.Max(k, Player.inst.CurrYear * cfg_minPointsPerYear);
-		k = (int)((float)k * lateGameMultiplier * bossSurgeMultiplier);
+		k = (int)((float)k * lateGameMultiplier);
 		Debug.Log(string.Concat(new object[]
 		{
-			"DoubleRaids: Raid points after multipliers (late: ",
+			"DoubleRaids: Raid points after late game multiplier (",
 			lateGameMultiplier.ToString("F2"),
-			"x, surge: ",
-			bossSurgeMultiplier.ToString("F2"),
 			"x): ",
 			k
 		}));
-
 		if (Player.inst.difficulty == Player.Difficulty.Easy)
 		{
-			int num99 = Mathf.Max(cfg_capMin, Player.inst.CurrYear * cfg_capEasy_yearMult + Player.inst.Workers.Count / cfg_capEasy_workerDiv);
-			if (flag) num99 = (int)((float)num99 * cfg_bossCapsMultiplier);
-			Debug.Log(string.Concat(new object[] { "DoubleRaids: Dynamic cap (Easy) = ", num99, " (Year: ", Player.inst.CurrYear, ", Workers: ", Player.inst.Workers.Count, ")" }));
+			int num99 = Mathf.Max(50, Player.inst.CurrYear * cfg_capEasy_yearMult + Player.inst.Workers.Count / cfg_capEasy_workerDiv);
+			if (flag)
+			{
+				num99 = (int)((float)num99 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Easy) = ",
+				num99,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
 			k = Mathff.Clamp(k, cfg_minPointsEasy, num99);
 		}
 		else if (Player.inst.difficulty == Player.Difficulty.Hard)
 		{
-			int num100 = Mathf.Max(cfg_capMin, Player.inst.CurrYear * cfg_capHard_yearMult + Player.inst.Workers.Count / cfg_capHard_workerDiv);
-			if (flag) num100 = (int)((float)num100 * cfg_bossCapsMultiplier);
-			Debug.Log(string.Concat(new object[] { "DoubleRaids: Dynamic cap (Hard) = ", num100, " (Year: ", Player.inst.CurrYear, ", Workers: ", Player.inst.Workers.Count, ")" }));
+			int num100 = Mathf.Max(50, Player.inst.CurrYear * cfg_capHard_yearMult + Player.inst.Workers.Count / cfg_capHard_workerDiv);
+			if (flag)
+			{
+				num100 = (int)((float)num100 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Hard) = ",
+				num100,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
 			k = Mathff.Clamp(k, cfg_minPointsHard, num100);
 		}
 		else if (Player.inst.difficulty == Player.Difficulty.Survival)
 		{
-			int num101 = Mathf.Max(cfg_capMin, Player.inst.CurrYear * cfg_capSurvival_yearMult + Player.inst.Workers.Count / cfg_capSurvival_workerDiv);
-			if (flag) num101 = (int)((float)num101 * cfg_bossCapsMultiplier);
-			Debug.Log(string.Concat(new object[] { "DoubleRaids: Dynamic cap (Survival) = ", num101, " (Year: ", Player.inst.CurrYear, ", Workers: ", Player.inst.Workers.Count, ")" }));
+			int num101 = Mathf.Max(50, Player.inst.CurrYear * cfg_capSurvival_yearMult + Player.inst.Workers.Count / cfg_capSurvival_workerDiv);
+			if (flag)
+			{
+				num101 = (int)((float)num101 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Survival) = ",
+				num101,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
 			k = Mathff.Clamp(k, cfg_minPointsSurvival, num101);
 		}
 		else
 		{
-			int num102 = Mathf.Max(cfg_capMin, Player.inst.CurrYear * cfg_capNormal_yearMult + Player.inst.Workers.Count / cfg_capNormal_workerDiv);
-			if (flag) num102 = (int)((float)num102 * cfg_bossCapsMultiplier);
-			Debug.Log(string.Concat(new object[] { "DoubleRaids: Dynamic cap (Normal) = ", num102, " (Year: ", Player.inst.CurrYear, ", Workers: ", Player.inst.Workers.Count, ")" }));
+			int num102 = Mathf.Max(50, Player.inst.CurrYear * cfg_capNormal_yearMult + Player.inst.Workers.Count / cfg_capNormal_workerDiv);
+			if (flag)
+			{
+				num102 = (int)((float)num102 * cfg_bossCapsMultiplier);
+			}
+			Debug.Log(string.Concat(new object[]
+			{
+				"DoubleRaids: Dynamic cap (Normal) = ",
+				num102,
+				" (Year: ",
+				Player.inst.CurrYear,
+				", Workers: ",
+				Player.inst.Workers.Count,
+				")"
+			}));
 			k = Mathff.Clamp(k, cfg_minPointsNormal, num102);
 		}
-
 		List<RaiderSystem.ObjectiveType> list2 = new List<RaiderSystem.ObjectiveType>();
 		for (int l = 0; l < 5; l++)
 		{
@@ -285,7 +249,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 				targetCellZ = -1
 			});
 		}
-
 		List<RaiderSystem.Objective> list3 = new List<RaiderSystem.Objective>();
 		int num104 = 0;
 		List<int> list4 = new List<int>();
@@ -304,7 +267,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 			}
 			num104 += count;
 		}
-
 		bool flag2 = Player.inst.difficulty >= Player.Difficulty.Hard;
 		bool flag3 = Player.inst.CurrYear >= 50 || (flag2 && num104 > 70) || (!flag2 && (num104 > 190 || (num104 > 100 && Player.inst.CurrYear > 50)));
 		int num105 = 0;
@@ -314,7 +276,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 		int count2 = Player.inst.Workers.Count;
 		List<RaiderSystem.ObjectiveSet> list6 = new List<RaiderSystem.ObjectiveSet>();
 		int num109 = 0;
-
 		for (int n = 0; n < list4.Count; n++)
 		{
 			float num110 = (float)World.inst.GetVillagersForLandMass(list4[n]).Count / (float)count2;
@@ -359,11 +320,9 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 				num114++;
 			}
 		}
-
 		Cell cell3 = World.inst.rimCells[SRand.Range(0, World.inst.rimCells.Length - 1)];
 		int num115 = 0;
 		Vector3 normalized = (cell3.Center - World.inst.GridCenter()).normalized;
-
 		for (int num116 = 0; num116 < list6.Count; num116++)
 		{
 			int landmassIdx = list6[num116].landmassIdx;
@@ -507,7 +466,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 						list8.Add(objective2);
 					}
 				}
-
 				IMoveableUnit moveableUnit = null;
 				int num128 = 0;
 				int num129 = 0;
@@ -516,7 +474,7 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 					Vector3 vector = cellDataClamped.Center - World.inst.GridCenter();
 					vector.Normalize();
 					Vector3 a = new Vector3(vector.z, 0f, -vector.x);
-					if (moveableUnit == null || num128 >= cfg_vikingsPerBoat)
+					if (moveableUnit == null || num128 >= 2)
 					{
 						this.RemoveNearestLanding(landings2, cell2.Center);
 						moveableUnit = this.SpawnVikingBoat(cellDataClamped.Center + vector * 10f + a * (float)num105 * 2f);
@@ -525,7 +483,7 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 						num108++;
 					}
 					UnitSystem.ArmyType armyType = UnitSystem.ArmyType.Default;
-					int num130 = Mathf.Clamp(Player.inst.CurrYear / num94, cfg_eliteChanceMin, max);
+					int num130 = Mathf.Clamp(Player.inst.CurrYear / num94, 5, max);
 					if (SRand.Range(0, 100) <= num130)
 					{
 						armyType = UnitSystem.ArmyType.Elite;
@@ -540,17 +498,12 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 					num128++;
 					num129 += 4;
 				}
-
-				int num131 = cfg_catapultYearNormal;
-				if (Player.inst.difficulty == Player.Difficulty.Easy)
-				{
-					num131 = cfg_catapultYearEasy;
-				}
-				else if (Player.inst.difficulty == Player.Difficulty.Hard)
+				int num131 = cfg_catapultYearEasy;
+				if (Player.inst.difficulty == Player.Difficulty.Hard)
 				{
 					num131 = cfg_catapultYearHard;
 				}
-				else if (Player.inst.difficulty == Player.Difficulty.Survival)
+				if (Player.inst.difficulty == Player.Difficulty.Survival)
 				{
 					num131 = cfg_catapultYearSurvival;
 				}
@@ -571,7 +524,7 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 					}
 					if (flag)
 					{
-						num132 = Mathf.Max(1, num132 / cfg_bossCatapultFreqDivisor);
+						num132 = Mathf.Max(1, num132 / 2);
 					}
 					IMoveableUnit moveableUnit3 = null;
 					int num133 = 0;
@@ -581,7 +534,7 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 						Vector3 vector2 = cellDataClamped.Center - World.inst.GridCenter();
 						vector2.Normalize();
 						Vector3 a2 = new Vector3(vector2.z, 0f, -vector2.x);
-						if (moveableUnit3 == null || num133 >= cfg_vikingsPerBoat)
+						if (moveableUnit3 == null || num133 >= 2)
 						{
 							this.RemoveNearestLanding(landings2, cell2.Center);
 							moveableUnit3 = this.SpawnVikingBoat(cellDataClamped.Center + vector2 * 10f + a2 * (float)num106 * 2f);
@@ -597,13 +550,12 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 						num134 += num132;
 					}
 				}
-
 				IMoveableUnit moveableUnit4 = null;
 				int num135 = 0;
 				int num136 = 0;
 				while (num136 < list8.Count && num108 < this.maxShips)
 				{
-					if (moveableUnit4 == null || num135 >= cfg_vikingsPerBoat)
+					if (moveableUnit4 == null || num135 >= 2)
 					{
 						Vector3 vector3 = cellDataClamped.Center - World.inst.GridCenter();
 						vector3.Normalize();
@@ -625,7 +577,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 					num136++;
 				}
 			}
-
 			if (Player.inst.CurrYear >= cfg_guaranteedOgreYear && list3.Count == 0)
 			{
 				int ogreCount = flag ? cfg_bossGuaranteedOgreCount : cfg_guaranteedOgreCount;
@@ -646,7 +597,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 				}
 				Debug.Log("DoubleRaids: Guaranteed ogres added: " + list3.Count);
 			}
-
 			int num137 = flag ? cfg_bossOgreFreqNormal : cfg_ogreFreqNormal;
 			if (World.inst.GetVillagersForLandMass(landmassIdx).Count > 2000)
 			{
@@ -661,7 +611,7 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 			int num139 = 0;
 			for (int num140 = 0; num140 < list3.Count; num140 += num137)
 			{
-				if (moveableUnit6 == null || num139 >= cfg_vikingsPerBoat)
+				if (moveableUnit6 == null || num139 >= 2)
 				{
 					Vector3 vector4 = cellDataClamped.Center - World.inst.GridCenter();
 					vector4.Normalize();
@@ -683,7 +633,6 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 				list.Add(list3[num141]);
 			}
 		}
-
 		for (int num142 = 0; num142 < list.Count; num142++)
 		{
 			this.objectives.Add(list[num142]);
@@ -696,17 +645,11 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 				num143--;
 			}
 		}
-
-		if (!flag)
+		if (flag)
 		{
-			Debug.Log("DoubleRaids: Raid setup complete!");
+			Debug.Log("DoubleRaids: *** BOSS WAVE COMPLETE ***");
 			return;
 		}
-		if (bossSurgeTriggered)
-		{
-			Debug.Log("DoubleRaids: *** BOSS WAVE + SURGE COMPLETE (x" + bossSurgeMultiplier.ToString("F2") + ") ***");
-			return;
-		}
-		Debug.Log("DoubleRaids: *** BOSS WAVE COMPLETE ***");
+		Debug.Log("DoubleRaids: Raid setup complete!");
 	}
 }

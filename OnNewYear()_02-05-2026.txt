@@ -1,0 +1,24 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using UnityEngine;
+
+// Token: 0x0200032E RID: 814
+public partial class RaiderSystem : MonoBehaviour, ICamTrackable
+{
+	// Token: 0x060018D9 RID: 6361 RVA: 0x000BC0B0 File Offset: 0x000BA2B0
+	public void OnNewYear()
+	{
+		this.yearsUntilNextAttack--;
+		if (this.yearsUntilNextAttack > 0)
+		{
+			Debug.Log("DoubleRaids: Skipping raid, years left: " + this.yearsUntilNextAttack);
+			return;
+		}
+		Debug.Log("DoubleRaids: OnNewYear() - launching raid!");
+		this.SetupRaid();
+		this.yearsUntilNextAttack = 3;
+		this.totalYearsUntilNextAttack = 3;
+		Debug.Log("DoubleRaids: Next raid in 3 years.");
+	}
+}

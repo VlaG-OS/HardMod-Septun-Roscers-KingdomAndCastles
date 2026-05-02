@@ -1,4 +1,4 @@
-п»їusing System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using UnityEngine;
@@ -10,91 +10,91 @@ public partial class RaiderSystem : MonoBehaviour, ICamTrackable
 	public void SetupRaid()
 	{
 		// =====================================================================
-		// РљРћРќР¤РР“РЈР РђР¦РРЇ вЂ” РІСЃРµ РЅР°СЃС‚СЂРѕР№РєРё Р·РґРµСЃСЊ
+		// КОНФИГУРАЦИЯ — все настройки здесь
 		// =====================================================================
 
-		// --- Р‘Р°Р·РѕРІС‹Р№ СЂРµР№Рґ ---
-		float cfg_strengthMultiplier       = 2.3f;  // РњРЅРѕР¶РёС‚РµР»СЊ РѕС‡РєРѕРІ СЂРµР№РґР°
-		int   cfg_shipsPerYearDivisor      = 10;    // РљРѕСЂР°Р±Р»РµР№ = РіРѕРґ / СЌС‚Рѕ С‡РёСЃР»Рѕ
-		int   cfg_shipsMinimum             = 2;     // РњРёРЅРёРјСѓРј РєРѕСЂР°Р±Р»РµР№
-		int   cfg_vikingsPerBoat           = 2;     // Р’РёРєРёРЅРіРѕРІ РЅР° РєРѕСЂР°Р±Р»СЊ
-		int   cfg_eliteChanceDivisor       = 3;     // РЁР°РЅСЃ СЌР»РёС‚С‹ = РіРѕРґ / СЌС‚Рѕ С‡РёСЃР»Рѕ
-		int   cfg_eliteChanceMin           = 5;     // РњРёРЅРёРјР°Р»СЊРЅС‹Р№ С€Р°РЅСЃ СЌР»РёС‚С‹ (%)
-		int   cfg_eliteChanceMax           = 50;    // РњР°РєСЃРёРјР°Р»СЊРЅС‹Р№ С€Р°РЅСЃ СЌР»РёС‚С‹ (%)
-		float cfg_escalationMultiplier     = 1.4f;  // РњРЅРѕР¶РёС‚РµР»СЊ escalationPoints
-		int   cfg_minPointsPerYear         = 2;     // РњРёРЅРёРјСѓРј РѕС‡РєРѕРІ = РіРѕРґ * СЌС‚Рѕ С‡РёСЃР»Рѕ
+		// --- Базовый рейд ---
+		float cfg_strengthMultiplier       = 2.3f;  // Множитель очков рейда
+		int   cfg_shipsPerYearDivisor      = 10;    // Кораблей = год / это число
+		int   cfg_shipsMinimum             = 2;     // Минимум кораблей
+		int   cfg_vikingsPerBoat           = 2;     // Викингов на корабль
+		int   cfg_eliteChanceDivisor       = 3;     // Шанс элиты = год / это число
+		int   cfg_eliteChanceMin           = 5;     // Минимальный шанс элиты (%)
+		int   cfg_eliteChanceMax           = 50;    // Максимальный шанс элиты (%)
+		float cfg_escalationMultiplier     = 1.4f;  // Множитель escalationPoints
+		int   cfg_minPointsPerYear         = 2;     // Минимум очков = год * это число
 
-		// --- Р”РёРЅР°РјРёС‡РµСЃРєРёР№ Р»РёРјРёС‚ РѕС‡РєРѕРІ РїРѕ СЃР»РѕР¶РЅРѕСЃС‚Рё ---
-		int   cfg_capMin                   = 50;    // РњРёРЅРёРјР°Р»СЊРЅС‹Р№ Р»РёРјРёС‚ РґР»СЏ РІСЃРµС…
-		int   cfg_capEasy_yearMult         = 5;     // Easy: Р»РёРјРёС‚ += РіРѕРґ * СЌС‚Рѕ
-		int   cfg_capEasy_workerDiv        = 8;     // Easy: Р»РёРјРёС‚ += Р¶РёС‚РµР»Рё / СЌС‚Рѕ
-		int   cfg_capNormal_yearMult       = 6;     // Normal: Р»РёРјРёС‚ += РіРѕРґ * СЌС‚Рѕ
-		int   cfg_capNormal_workerDiv      = 6;     // Normal: Р»РёРјРёС‚ += Р¶РёС‚РµР»Рё / СЌС‚Рѕ
-		int   cfg_capHard_yearMult         = 8;     // Hard: Р»РёРјРёС‚ += РіРѕРґ * СЌС‚Рѕ
-		int   cfg_capHard_workerDiv        = 5;     // Hard: Р»РёРјРёС‚ += Р¶РёС‚РµР»Рё / СЌС‚Рѕ
-		int   cfg_capSurvival_yearMult     = 10;    // Survival: Р»РёРјРёС‚ += РіРѕРґ * СЌС‚Рѕ
-		int   cfg_capSurvival_workerDiv    = 3;     // Survival: Р»РёРјРёС‚ += Р¶РёС‚РµР»Рё / СЌС‚Рѕ
+		// --- Динамический лимит очков по сложности ---
+		int   cfg_capMin                   = 50;    // Минимальный лимит для всех
+		int   cfg_capEasy_yearMult         = 5;     // Easy: лимит += год * это
+		int   cfg_capEasy_workerDiv        = 8;     // Easy: лимит += жители / это
+		int   cfg_capNormal_yearMult       = 6;     // Normal: лимит += год * это
+		int   cfg_capNormal_workerDiv      = 6;     // Normal: лимит += жители / это
+		int   cfg_capHard_yearMult         = 8;     // Hard: лимит += год * это
+		int   cfg_capHard_workerDiv        = 5;     // Hard: лимит += жители / это
+		int   cfg_capSurvival_yearMult     = 10;    // Survival: лимит += год * это
+		int   cfg_capSurvival_workerDiv    = 3;     // Survival: лимит += жители / это
 
-		// --- РњРёРЅРёРјСѓРј РѕС‡РєРѕРІ РїРѕ СЃР»РѕР¶РЅРѕСЃС‚Рё ---
+		// --- Минимум очков по сложности ---
 		int   cfg_minPointsEasy            = 3;
 		int   cfg_minPointsNormal          = 4;
 		int   cfg_minPointsHard            = 6;
 		int   cfg_minPointsSurvival        = 10;
 
-		// --- РљР°С‚Р°РїСѓР»СЊС‚С‹ ---
-		int   cfg_catapultYearEasy         = 150;   // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РєР°С‚Р°РїСѓР»СЊС‚С‹ (Easy)
-		int   cfg_catapultYearNormal       = 150;   // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РєР°С‚Р°РїСѓР»СЊС‚С‹ (Normal)
-		int   cfg_catapultYearHard         = 95;    // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РєР°С‚Р°РїСѓР»СЊС‚С‹ (Hard)
-		int   cfg_catapultYearSurvival     = 65;    // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РєР°С‚Р°РїСѓР»СЊС‚С‹ (Survival)
-		int   cfg_catapultFreqEasy         = 32;    // РљР°С‚Р°РїСѓР»СЊС‚Р° РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (Easy)
-		int   cfg_catapultFreqNormal       = 4;     // РљР°С‚Р°РїСѓР»СЊС‚Р° РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (Normal)
-		int   cfg_catapultFreqHard         = 24;    // РљР°С‚Р°РїСѓР»СЊС‚Р° РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (Hard)
-		int   cfg_catapultFreqSurvival     = 12;    // РљР°С‚Р°РїСѓР»СЊС‚Р° РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (Survival)
+		// --- Катапульты ---
+		int   cfg_catapultYearEasy         = 150;   // С какого года катапульты (Easy)
+		int   cfg_catapultYearNormal       = 150;   // С какого года катапульты (Normal)
+		int   cfg_catapultYearHard         = 95;    // С какого года катапульты (Hard)
+		int   cfg_catapultYearSurvival     = 65;    // С какого года катапульты (Survival)
+		int   cfg_catapultFreqEasy         = 32;    // Катапульта каждые N целей (Easy)
+		int   cfg_catapultFreqNormal       = 4;     // Катапульта каждые N целей (Normal)
+		int   cfg_catapultFreqHard         = 24;    // Катапульта каждые N целей (Hard)
+		int   cfg_catapultFreqSurvival     = 12;    // Катапульта каждые N целей (Survival)
 
-		// --- РћРіСЂС‹ ---
-		int   cfg_ogreFreqNormal           = 4;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№
-		int   cfg_ogreFreqAt2000pop        = 3;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (2000+ Р¶РёС‚.)
-		int   cfg_ogreFreqAt4000pop        = 2;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№ (4000+ Р¶РёС‚.)
-		int   cfg_guaranteedOgreYear       = 30;    // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹Рµ РѕРіСЂС‹
-		int   cfg_guaranteedOgreCount      = 14;    // РЎРєРѕР»СЊРєРѕ РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹С… РѕРіСЂРѕРІ
+		// --- Огры ---
+		int   cfg_ogreFreqNormal           = 4;     // Огр каждые N целей
+		int   cfg_ogreFreqAt2000pop        = 3;     // Огр каждые N целей (2000+ жит.)
+		int   cfg_ogreFreqAt4000pop        = 2;     // Огр каждые N целей (4000+ жит.)
+		int   cfg_guaranteedOgreYear       = 30;    // С какого года гарантированные огры
+		int   cfg_guaranteedOgreCount      = 14;    // Сколько гарантированных огров
 
-		// --- Р‘РѕСЃСЃ-РІРѕР»РЅР° ---
-		int   cfg_bossWaveStartYear        = 20;    // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РЅР°С‡РёРЅР°СЋС‚СЃСЏ Р±РѕСЃСЃ-РІРѕР»РЅС‹
-		int   cfg_bossWaveEveryNYears      = 10;    // Р‘РѕСЃСЃ-РІРѕР»РЅР° РєР°Р¶РґС‹Рµ N Р»РµС‚
-		float cfg_bossStrengthMultiplier   = 4f;    // РњРЅРѕР¶РёС‚РµР»СЊ РѕС‡РєРѕРІ РЅР° Р±РѕСЃСЃ-РІРѕР»РЅРµ
-		int   cfg_bossShipsPerYearDivisor  = 5;     // РљРѕСЂР°Р±Р»РµР№ РЅР° Р±РѕСЃСЃ = РіРѕРґ / СЌС‚Рѕ
-		int   cfg_bossShipsMinimum         = 6;     // РњРёРЅРёРјСѓРј РєРѕСЂР°Р±Р»РµР№ РЅР° Р±РѕСЃСЃ-РІРѕР»РЅРµ
-		int   cfg_bossEliteChanceDivisor   = 1;     // РЁР°РЅСЃ СЌР»РёС‚С‹ РЅР° Р±РѕСЃСЃ = РіРѕРґ / СЌС‚Рѕ
-		int   cfg_bossEliteChanceMax       = 95;    // РњР°РєСЃ С€Р°РЅСЃ СЌР»РёС‚С‹ РЅР° Р±РѕСЃСЃ (%)
-		float cfg_bossEscalationMultiplier = 2.5f;  // РњРЅРѕР¶РёС‚РµР»СЊ escalationPoints РЅР° Р±РѕСЃСЃ
-		float cfg_bossCapsMultiplier       = 2f;    // РњРЅРѕР¶РёС‚РµР»СЊ Р»РёРјРёС‚РѕРІ РЅР° Р±РѕСЃСЃ-РІРѕР»РЅРµ
-		int   cfg_bossOgreFreqNormal       = 4;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№ РЅР° Р±РѕСЃСЃ
-		int   cfg_bossOgreFreqAt2000pop    = 3;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№ РЅР° Р±РѕСЃСЃ (2000+)
-		int   cfg_bossOgreFreqAt4000pop    = 2;     // РћРіСЂ РєР°Р¶РґС‹Рµ N С†РµР»РµР№ РЅР° Р±РѕСЃСЃ (4000+)
-		int   cfg_bossGuaranteedOgreCount  = 25;    // Р“Р°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹С… РѕРіСЂРѕРІ РЅР° Р±РѕСЃСЃ
-		int   cfg_bossCatapultFreqDivisor  = 2;     // РљР°С‚Р°РїСѓР»СЊС‚С‹ РЅР° Р±РѕСЃСЃ С‡Р°С‰Рµ РІ N СЂР°Р·
+		// --- Босс-волна ---
+		int   cfg_bossWaveStartYear        = 20;    // С какого года начинаются босс-волны
+		int   cfg_bossWaveEveryNYears      = 10;    // Босс-волна каждые N лет
+		float cfg_bossStrengthMultiplier   = 4f;    // Множитель очков на босс-волне
+		int   cfg_bossShipsPerYearDivisor  = 5;     // Кораблей на босс = год / это
+		int   cfg_bossShipsMinimum         = 6;     // Минимум кораблей на босс-волне
+		int   cfg_bossEliteChanceDivisor   = 1;     // Шанс элиты на босс = год / это
+		int   cfg_bossEliteChanceMax       = 95;    // Макс шанс элиты на босс (%)
+		float cfg_bossEscalationMultiplier = 2.5f;  // Множитель escalationPoints на босс
+		float cfg_bossCapsMultiplier       = 2f;    // Множитель лимитов на босс-волне
+		int   cfg_bossOgreFreqNormal       = 4;     // Огр каждые N целей на босс
+		int   cfg_bossOgreFreqAt2000pop    = 3;     // Огр каждые N целей на босс (2000+)
+		int   cfg_bossOgreFreqAt4000pop    = 2;     // Огр каждые N целей на босс (4000+)
+		int   cfg_bossGuaranteedOgreCount  = 25;    // Гарантированных огров на босс
+		int   cfg_bossCatapultFreqDivisor  = 2;     // Катапульты на босс чаще в N раз
 
-		// --- Boss Surge (СЃР»СѓС‡Р°Р№РЅРѕРµ СѓСЃРёР»РµРЅРёРµ Р±РѕСЃСЃРѕРІ РїРѕСЃР»Рµ РіРѕРґР° 100) ---
-		int   cfg_bossurgeSurgeChance      = 30;    // РЁР°РЅСЃ surge (%)
-		float cfg_surgMultMin              = 1.3f;  // РњРёРЅРёРјР°Р»СЊРЅС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ surge
-		float cfg_surgeMultMax             = 2.5f;    // РњР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ surge
-		int   cfg_surgeStartYear           = 100;   // РЎ РєР°РєРѕРіРѕ РіРѕРґР° РІРѕР·РјРѕР¶РµРЅ surge
+		// --- Boss Surge (случайное усиление боссов после года 100) ---
+		int   cfg_bossurgeSurgeChance      = 30;    // Шанс surge (%)
+		float cfg_surgMultMin              = 1.3f;  // Минимальный множитель surge
+		float cfg_surgeMultMax             = 2.5f;    // Максимальный множитель surge
+		int   cfg_surgeStartYear           = 100;   // С какого года возможен surge
 
-		// --- РџРѕР·РґРЅСЏСЏ РёРіСЂР° ---
-		float cfg_lateGameBonusPerYear     = 0.05f; // +5% Р·Р° РєР°Р¶РґС‹Р№ РіРѕРґ РїРѕСЃР»Рµ СЃС‚Р°СЂС‚Р°
-		int   cfg_lateGameBonusStartYear   = 100;   // РЎ РєР°РєРѕРіРѕ РіРѕРґР° Р±РѕРЅСѓСЃ РїРѕР·РґРЅРµР№ РёРіСЂС‹
+		// --- Поздняя игра ---
+		float cfg_lateGameBonusPerYear     = 0.05f; // +5% за каждый год после старта
+		int   cfg_lateGameBonusStartYear   = 100;   // С какого года бонус поздней игры
 
-		// --- Р Р°СЃС‡С‘С‚ РѕС‡РєРѕРІ (РЅРµ С‚СЂРѕРіР°С‚СЊ Р±РµР· РїРѕРЅРёРјР°РЅРёСЏ) ---
-		int   cfg_workerClampMax           = 450;   // РњР°РєСЃ Р¶РёС‚РµР»РµР№ Р·Р° РёС‚РµСЂР°С†РёСЋ
-		float cfg_workerDivisorStart       = 33f;   // РќР°С‡Р°Р»СЊРЅС‹Р№ РґРµР»РёС‚РµР»СЊ Р¶РёС‚РµР»РµР№
-		float cfg_workerDivisorStep        = 12f;   // РЁР°Рі СѓРІРµР»РёС‡РµРЅРёСЏ РґРµР»РёС‚РµР»СЏ
-		int   cfg_yearClampMax             = 100;   // РњР°РєСЃ Р»РµС‚ Р·Р° РёС‚РµСЂР°С†РёСЋ
-		float cfg_yearDivisorNormal        = 25f;   // Р”РµР»РёС‚РµР»СЊ Р»РµС‚ (Normal)
-		float cfg_yearDivisorHard          = 10f;   // Р”РµР»РёС‚РµР»СЊ Р»РµС‚ (Hard)
-		float cfg_yearDivisorStep          = 4f;    // РЁР°Рі СѓРІРµР»РёС‡РµРЅРёСЏ РґРµР»РёС‚РµР»СЏ Р»РµС‚
+		// --- Расчёт очков (не трогать без понимания) ---
+		int   cfg_workerClampMax           = 450;   // Макс жителей за итерацию
+		float cfg_workerDivisorStart       = 33f;   // Начальный делитель жителей
+		float cfg_workerDivisorStep        = 12f;   // Шаг увеличения делителя
+		int   cfg_yearClampMax             = 100;   // Макс лет за итерацию
+		float cfg_yearDivisorNormal        = 25f;   // Делитель лет (Normal)
+		float cfg_yearDivisorHard          = 10f;   // Делитель лет (Hard)
+		float cfg_yearDivisorStep          = 4f;    // Шаг увеличения делителя лет
 
 		// =====================================================================
-		// РљРћР” вЂ” РЅРµ С‚СЂРѕРіР°С‚СЊ
+		// КОД — не трогать
 		// =====================================================================
 
 		float lateGameMultiplier = 1f;
